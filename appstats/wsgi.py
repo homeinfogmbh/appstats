@@ -33,8 +33,8 @@ def _get_stats(start=None, end=None):
 def _count_stats(statistics):
     """Counts the respective statistics."""
 
-    vids = defaultdict(defaultdict(int))
-    tids = defaultdict(defaultdict(int))
+    vids = defaultdict(lambda: defaultdict(int))
+    tids = defaultdict(lambda: defaultdict(int))
 
     for statistic in statistics:
         if statistic.vid is not None:
