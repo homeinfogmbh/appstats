@@ -16,16 +16,16 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Application statistics', cors=True, debug=True)
 
 
-def _get_stats(start=None, end=None, vid=None, tid=None):
+def _get_stats(since=None, until=None, vid=None, tid=None):
     """Yields the customer's tenant-to-tenant messages."""
 
     expression = Statistics.customer == CUSTOMER.id
 
-    if start is not None:
-        expression &= Statistics.timestamp >= start
+    if since is not None:
+        expression &= Statistics.timestamp >= since
 
-    if end is not None:
-        expression &= Statistics.timestamp <= end
+    if until is not None:
+        expression &= Statistics.timestamp <= until
 
     if vid is not None:
         expression &= Statistics.vid == vid
@@ -57,8 +57,8 @@ def _count_stats(statistics):
 def list_stats():
     """Returns the respective statistics."""
 
-    start = strpdatetime_or_time(request.args.get('from'))
-    end = strpdatetime_or_time(request.args.get('until'))
+    since = strpdatetime_or_time(request.args.get('since'))
+    until = strpdatetime_or_time(request.args.get('until'))
     vid = request.args.get('vid')
 
     if vid is not None:
@@ -69,7 +69,7 @@ def list_stats():
     if tid is not None:
         tid = int(tid)
 
-    statistics = _get_stats(start=start, end=end, vid=vid, tid=tid)
+    statistics = _get_stats(since=since, until=until, vid=vid, tid=tid)
 
     try:
         request.args['raw']
