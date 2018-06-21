@@ -33,12 +33,17 @@ def _get_stats(start=None, end=None):
 def _count_stats(statistics):
     """Counts the respective statistics."""
 
-    counts = defaultdict(int)
+    vids = defaultdict(defaultdict(int))
+    tids = defaultdict(defaultdict(int))
 
     for statistic in statistics:
-        counts[statistic.document] += 1
+        if statistic.vid is not None:
+            vids[statistic.vid][statistic.document] += 1
 
-    return counts
+        if statistic.tid is not None:
+            tids[statistic.tid][statistic.document] += 1
+
+    return (vids, tids)
 
 
 @authenticated
@@ -53,7 +58,8 @@ def list_stats():
     try:
         request.args['raw']
     except KeyError:
-        return JSON(_count_stats(statistics))
+        vids, tids = _count_stats(statistics)
+        return JSON({'vids': vids, 'tids': tids})
 
     return JSON([statistic.to_dict() for statistic in statistics])
 
