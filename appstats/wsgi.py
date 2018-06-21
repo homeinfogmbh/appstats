@@ -5,7 +5,7 @@ from collections import defaultdict
 from flask import request
 
 from his import CUSTOMER, authenticated, authorized, Application
-from timelib import strpdatetime_or_time
+from timelib import strpdatetime
 from wsgilib import JSON
 
 from digsigdb import Statistics
@@ -57,8 +57,8 @@ def _count_stats(statistics):
 def list_stats():
     """Returns the respective statistics."""
 
-    since = strpdatetime_or_time(request.args.get('since'))
-    until = strpdatetime_or_time(request.args.get('until'))
+    since = strpdatetime(request.args.get('since'))
+    until = strpdatetime(request.args.get('until'))
     vid = request.args.get('vid')
 
     if vid is not None:
