@@ -16,7 +16,7 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Application statistics', cors=True, debug=True)
 
 
-def _get_stats(start=None, end=None):
+def _get_stats(start=None, end=None, vid=None, tid=None):
     """Yields the customer's tenant-to-tenant messages."""
 
     expression = Statistics.customer == CUSTOMER.id
@@ -26,6 +26,12 @@ def _get_stats(start=None, end=None):
 
     if end is not None:
         expression &= Statistics.timestamp <= end
+
+    if vid is not None:
+        expression &= Statistics.vid == vid
+
+    if tid is not None:
+        expression &= Statistics.tid == tid
 
     return Statistics.select().where(expression)
 
@@ -53,7 +59,17 @@ def list_stats():
 
     start = strpdatetime_or_time(request.args.get('from'))
     end = strpdatetime_or_time(request.args.get('until'))
-    statistics = _get_stats(start=start, end=end)
+    vid = request.args.get('vid')
+
+    if vid is not None:
+        vid = int(vid)
+
+    tid = request.args.get('tid')
+
+    if tid is not None:
+        tid = int(tid)
+
+    statistics = _get_stats(start=start, end=end, vid=vid, tid=tid)
 
     try:
         request.args['raw']
