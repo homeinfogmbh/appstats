@@ -10,6 +10,6 @@ setup(
     author_email='<info at homeinfo dot de>',
     maintainer='Richard Neumann',
     maintainer_email='<r dot neumann at homeinfo priod de>',
-    packages=['tenant2tenant'],
+    packages=['appstats'],
     license='GPLv3',
     description='HIS microservice to handle Application statistics.')
