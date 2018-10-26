@@ -13,7 +13,7 @@ from digsigdb import Statistics
 __all__ = ['APPLICATION']
 
 
-APPLICATION = Application('Application statistics', cors=True, debug=True)
+APPLICATION = Application('Application statistics', debug=True)
 
 
 def _get_stats(since=None, until=None, vid=None, tid=None):
