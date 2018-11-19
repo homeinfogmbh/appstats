@@ -6,7 +6,7 @@ from flask import request
 
 from his import CUSTOMER, authenticated, authorized, Application
 from timelib import strpdatetime
-from wsgilib import JSON
+from wsgilib import ACCEPT, JSON, OK
 
 from digsigdb import Statistics
 
@@ -76,6 +76,9 @@ def list_stats():
     except KeyError:
         vids, tids = _count_stats(statistics)
         return JSON({'vids': vids, 'tids': tids})
+
+    if 'text/csv' in ACCEPT:
+        return OK('\r\n'.join(statistic.to_csv() for statistic in statistics))
 
     return JSON([statistic.to_dict() for statistic in statistics])
 
