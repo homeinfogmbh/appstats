@@ -80,7 +80,7 @@ def list_stats():
     if 'text/csv' in ACCEPT:
         return OK('\r\n'.join(statistic.to_csv() for statistic in statistics))
 
-    return JSON([statistic.to_dict() for statistic in statistics])
+    return JSON([statistic.to_json() for statistic in statistics])
 
 
 ROUTES = (('GET', '/', list_stats, 'list_stats'),)
