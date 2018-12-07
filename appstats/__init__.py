@@ -1,5 +1,6 @@
-"""Microservice for tenant-to-tenant messages."""
+"""Microservice for Digital Signage Application statistics."""
 
 from appstats.wsgi import APPLICATION
+
 
 __all__ = ['APPLICATION']

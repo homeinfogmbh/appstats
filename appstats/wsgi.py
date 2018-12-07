@@ -1,4 +1,4 @@
-"""Authenticated and authorized HIS services."""
+"""WSGI services."""
 
 from collections import defaultdict
 
@@ -9,6 +9,7 @@ from timelib import strpdatetime
 from wsgilib import ACCEPT, JSON, OK
 
 from digsigdb import Statistics
+
 
 __all__ = ['APPLICATION']
 
