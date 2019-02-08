@@ -4,11 +4,10 @@ from collections import defaultdict
 
 from flask import request
 
+from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
 from timelib import strpdatetime
 from wsgilib import ACCEPT, JSON, OK
-
-from digsigdb import Statistics
 
 
 __all__ = ['APPLICATION']
