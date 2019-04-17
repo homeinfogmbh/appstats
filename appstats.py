@@ -6,6 +6,7 @@ from flask import request
 
 from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
+from terminallib import Deployment
 from timelib import strpdatetime
 from wsgilib import ACCEPT, JSON, OK
 
@@ -16,10 +17,10 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Application statistics', debug=True)
 
 
-def _get_stats(since=None, until=None, vid=None, tid=None):
+def _get_stats(deployment, since, until):
     """Yields the customer's tenant-to-tenant messages."""
 
-    expression = Statistics.customer == CUSTOMER.id
+    expression = Statistics.deployment == deployment
 
     if since is not None:
         expression &= Statistics.timestamp >= since
@@ -27,29 +28,18 @@ def _get_stats(since=None, until=None, vid=None, tid=None):
     if until is not None:
         expression &= Statistics.timestamp <= until
 
-    if vid is not None:
-        expression &= Statistics.vid == vid
-
-    if tid is not None:
-        expression &= Statistics.tid == tid
-
     return Statistics.select().where(expression)
 
 
 def _count_stats(statistics):
     """Counts the respective statistics."""
 
-    vids = defaultdict(lambda: defaultdict(int))
-    tids = defaultdict(lambda: defaultdict(int))
+    stats = defaultdict(lambda: defaultdict(int))
 
     for statistic in statistics:
-        if statistic.vid is not None:
-            vids[statistic.vid][statistic.document] += 1
+        stats[statistic.deployment.id][statistic.document] += 1
 
-        if statistic.tid is not None:
-            tids[statistic.tid][statistic.document] += 1
-
-    return (vids, tids)
+    return stats
 
 
 @authenticated
@@ -59,23 +49,27 @@ def list_stats():
 
     since = strpdatetime(request.args.get('since'))
     until = strpdatetime(request.args.get('until'))
-    vid = request.args.get('vid')
+    deployment = request.args.get('deployment')
 
-    if vid is not None:
-        vid = int(vid)
+    if deployment is not None:
+        try:
+            ident = int(deployment)
+        except ValueError:
+            return ('Invalid deployment ID.', 404)
 
-    tid = request.args.get('tid')
+        try:
+            deployment = Deployment.get(
+                (Deployment.id == ident)
+                & (Deployment.customer == CUSTOMER.id))
+        except Deployment.DoesNotExist:
+            return ('No such deployment.', 404)
 
-    if tid is not None:
-        tid = int(tid)
-
-    statistics = _get_stats(since=since, until=until, vid=vid, tid=tid)
+    statistics = _get_stats(deployment, since, until)
 
     try:
         request.args['raw']
     except KeyError:
-        vids, tids = _count_stats(statistics)
-        return JSON({'vids': vids, 'tids': tids})
+        return JSON(_count_stats(statistics))
 
     if 'text/csv' in ACCEPT:
         return OK('\r\n'.join(statistic.to_csv() for statistic in statistics))
