@@ -20,7 +20,10 @@ APPLICATION = Application('Application statistics', debug=True)
 def _get_stats(deployment, since, until):
     """Yields the customer's tenant-to-tenant messages."""
 
-    expression = Statistics.deployment == deployment
+    expression = Deployment.customer == CUSTOMER.id
+
+    if deployment:
+        expression &= Deployment.id == deployment
 
     if since is not None:
         expression &= Statistics.timestamp >= since
