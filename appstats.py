@@ -23,7 +23,7 @@ def _get_stats(deployment, since, until):
     expression = Deployment.customer == CUSTOMER.id
 
     if deployment:
-        expression &= Deployment.id == deployment
+        expression &= Statistics.deployment == deployment
 
     if since is not None:
         expression &= Statistics.timestamp >= since
@@ -31,7 +31,7 @@ def _get_stats(deployment, since, until):
     if until is not None:
         expression &= Statistics.timestamp <= until
 
-    return Statistics.select().where(expression)
+    return Statistics.select().join(Deployment).where(expression)
 
 
 def _count_stats(statistics):
@@ -56,16 +56,9 @@ def list_stats():
 
     if deployment is not None:
         try:
-            ident = int(deployment)
+            deployment = int(deployment)
         except ValueError:
             return ('Invalid deployment ID.', 404)
-
-        try:
-            deployment = Deployment.get(
-                (Deployment.id == ident)
-                & (Deployment.customer == CUSTOMER.id))
-        except Deployment.DoesNotExist:
-            return ('No such deployment.', 404)
 
     statistics = _get_stats(deployment, since, until)
 
