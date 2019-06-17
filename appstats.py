@@ -40,7 +40,7 @@ def _count_stats(statistics):
     stats = defaultdict(lambda: defaultdict(int))
 
     for statistic in statistics:
-        stats[statistic.deployment.id][statistic.document] += 1
+        stats[statistic.deployment_id][statistic.document] += 1
 
     return stats
 
@@ -73,5 +73,5 @@ def list_stats():
     return JSON([statistic.to_json() for statistic in statistics])
 
 
-ROUTES = (('GET', '/', list_stats, 'list_stats'),)
+ROUTES = (('GET', '/', list_stats),)
 APPLICATION.add_routes(ROUTES)
