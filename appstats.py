@@ -46,7 +46,7 @@ def _count_stats(statistics):
 
 
 @authenticated
-@authorized('tenant2tenant')
+@authorized('appstats')
 def list_stats():
     """Returns the respective statistics."""
 
