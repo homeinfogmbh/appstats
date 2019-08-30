@@ -8,7 +8,7 @@ from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
 from terminallib import Deployment
 from timelib import strpdatetime
-from wsgilib import ACCEPT, JSON, OK
+from wsgilib import ACCEPT, Binary, JSON
 
 
 __all__ = ['APPLICATION']
@@ -68,7 +68,8 @@ def list_stats():
         return JSON(_count_stats(statistics))
 
     if 'text/csv' in ACCEPT:
-        return OK('\r\n'.join(statistic.to_csv() for statistic in statistics))
+        text = '\r\n'.join(statistic.to_csv() for statistic in statistics)
+        return Binary(text.encode(), filename='statistik.csv')
 
     return JSON([statistic.to_json() for statistic in statistics])
 
