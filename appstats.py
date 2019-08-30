@@ -68,9 +68,9 @@ def _get_csv_filename(deployment, since, until):
     """Returns a CSV file name."""
 
     if deployment is None:
-        deployment = 'all'
+        address = 'all'
     else:
-        deployment = _get_deployment(deployment)
+        address = _get_deployment(deployment).address
 
     since = 'beginning' if since is None else since.isoformat()
     until = 'now' if until is None else until.isoformat()
