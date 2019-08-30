@@ -6,6 +6,7 @@ from flask import request
 
 from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
+from mdb import Address
 from terminallib import Deployment
 from timelib import strpdatetime
 from wsgilib import ACCEPT, Binary, JSON
@@ -45,6 +46,18 @@ def _count_stats(statistics):
     return stats
 
 
+def _stats_to_csv(counted_stats):
+    """Yields CSV records."""
+
+    for deployment_id, documents in counted_stats.items():
+        deployment = Deployment.select().join(Address).where(
+            (Deployment.id == deployment_id)
+            & (Deployment.customer == CUSTOMER.id)).get()
+
+        for document, clicks in documents.items():
+            yield f'{deployment.address};{document};{clicks}'
+
+
 @authenticated
 @authorized('appstats')
 def list_stats():
@@ -65,11 +78,13 @@ def list_stats():
     try:
         request.args['raw']
     except KeyError:
-        return JSON(_count_stats(statistics))
+        counted_stats = _count_stats(statistics)
 
-    if 'text/csv' in ACCEPT:
-        text = '\r\n'.join(statistic.to_csv() for statistic in statistics)
-        return Binary(text.encode(), filename='statistik.csv')
+        if 'text/csv' in ACCEPT:
+            text = '\r\n'.join(_stats_to_csv(counted_stats))
+            return Binary(text.encode(), filename='statistik.csv')
+
+        return JSON(counted_stats)
 
     return JSON([statistic.to_json() for statistic in statistics])
 
