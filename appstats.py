@@ -75,7 +75,7 @@ def _get_csv_filename(deployment, since, until):
     since = 'beginning' if since is None else since.isoformat()
     until = 'now' if until is None else until.isoformat()
 
-    return f'statistics-{deployment}-{since}-{until}.csv'
+    return f'statistics-{address}-{since}-{until}.csv'
 
 
 @authenticated
