@@ -18,6 +18,14 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Application statistics', debug=True)
 
 
+def _get_deployment(ident):
+    """Returns the respective deployment with its address."""
+
+    join = Deployment.address == Address.id
+    return Deployment.select().join(Address, on=join).where(
+        (Deployment.id == ident) & (Deployment.customer == CUSTOMER.id)).get()
+
+
 def _get_stats(deployment, since, until):
     """Yields the customer's tenant-to-tenant messages."""
 
@@ -50,13 +58,24 @@ def _stats_to_csv(counted_stats):
     """Yields CSV records."""
 
     for deployment_id, documents in counted_stats.items():
-        join = Deployment.address == Address.id
-        deployment = Deployment.select().join(Address, on=join).where(
-            (Deployment.id == deployment_id)
-            & (Deployment.customer == CUSTOMER.id)).get()
+        deployment = _get_deployment(deployment_id)
 
         for document, clicks in documents.items():
             yield f'{deployment.address};{document};{clicks}'
+
+
+def _get_csv_filename(deployment, since, until):
+    """Returns a CSV file name."""
+
+    if deployment is None:
+        deployment = 'all'
+    else:
+        deployment = _get_deployment(deployment)
+
+    since = 'beginning' if since is None else since.isoformat()
+    until = 'now' if until is None else until.isoformat()
+
+    return f'statistics-{deployment}-{since}-{until}.csv'
 
 
 @authenticated
@@ -83,7 +102,8 @@ def list_stats():
 
         if 'text/csv' in ACCEPT:
             text = '\r\n'.join(_stats_to_csv(counted_stats))
-            return Binary(text.encode(), filename='statistik.csv')
+            filename = _get_csv_filename(deployment, since, until)
+            return Binary(text.encode(), filename=filename)
 
         return JSON(counted_stats)
 
