@@ -50,7 +50,8 @@ def _stats_to_csv(counted_stats):
     """Yields CSV records."""
 
     for deployment_id, documents in counted_stats.items():
-        deployment = Deployment.select().join(Address).where(
+        join = Deployment.address == Address.id
+        deployment = Deployment.select().join(Address, on=join).where(
             (Deployment.id == deployment_id)
             & (Deployment.customer == CUSTOMER.id)).get()
 
