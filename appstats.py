@@ -6,8 +6,8 @@ from flask import request
 
 from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
+from hwdb import Deployment
 from mdb import Address
-from terminallib import Deployment
 from timelib import strpdatetime
 from wsgilib import ACCEPT, Binary, JSON
 
