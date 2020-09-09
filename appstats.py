@@ -29,18 +29,18 @@ def _get_deployment(ident):
 def _get_stats(deployment, since, until):
     """Yields the customer's tenant-to-tenant messages."""
 
-    expression = Deployment.customer == CUSTOMER.id
+    condition = Deployment.customer == CUSTOMER.id
 
     if deployment:
-        expression &= Statistics.deployment == deployment
+        condition &= Statistics.deployment == deployment
 
     if since is not None:
-        expression &= Statistics.timestamp >= since
+        condition &= Statistics.timestamp >= since
 
     if until is not None:
-        expression &= Statistics.timestamp <= until
+        condition &= Statistics.timestamp <= until
 
-    return Statistics.select().join(Deployment).where(expression)
+    return Statistics.select().join(Deployment).where(condition)
 
 
 def _count_stats(statistics):
