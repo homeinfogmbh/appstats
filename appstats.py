@@ -31,7 +31,7 @@ def _get_stats(deployment, since, until):
 
     condition = Deployment.customer == CUSTOMER.id
 
-    if deployment:
+    if deployment is not None:
         condition &= Statistics.deployment == deployment
 
     if since is not None:
