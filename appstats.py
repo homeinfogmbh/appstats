@@ -40,7 +40,7 @@ def _get_stats(deployment, since, until):
     if until is not None:
         condition &= Statistics.timestamp <= until
 
-    return Statistics.select().join(Deployment).where(condition)
+    return Statistics.select().join(Deployment).where(condition).iterator()
 
 
 def _count_stats(statistics):
@@ -95,19 +95,17 @@ def list_stats():
 
     statistics = _get_stats(deployment, since, until)
 
-    try:
-        request.args['raw']
-    except KeyError:
-        counted_stats = _count_stats(statistics)
+    if request.args.get('raw', False):
+        return JSON([statistic.to_json() for statistic in statistics])
 
-        if 'text/csv' in ACCEPT:
-            text = '\r\n'.join(_stats_to_csv(counted_stats))
-            filename = _get_csv_filename(deployment, since, until)
-            return Binary(text.encode(), filename=filename)
+    counted_stats = _count_stats(statistics)
 
-        return JSON(counted_stats)
+    if 'text/csv' in ACCEPT:
+        text = '\r\n'.join(_stats_to_csv(counted_stats))
+        filename = _get_csv_filename(deployment, since, until)
+        return Binary(text.encode(), filename=filename)
 
-    return JSON([statistic.to_json() for statistic in statistics])
+    return JSON(counted_stats)
 
 
 ROUTES = (('GET', '/', list_stats),)
