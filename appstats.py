@@ -10,7 +10,6 @@ from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
 from hwdb import Deployment
 from mdb import Address
-from timelib import strpdatetime
 from wsgilib import ACCEPT, Binary, JSON
 
 
@@ -94,8 +93,12 @@ def _get_csv_filename(deployment: Optional[int], since: Optional[datetime],
 def list_stats() -> Response:
     """Returns the respective statistics."""
 
-    since = strpdatetime(request.args.get('since'))
-    until = strpdatetime(request.args.get('until'))
+    if (since := request.args.get('since')) is not None:
+        since = datetime.fromisoformat(since)
+
+    if (until := request.args.get('until')) is not None:
+        until = datetime.fromisoformat(until)
+
     deployment = request.args.get('deployment')
 
     if deployment is not None:
