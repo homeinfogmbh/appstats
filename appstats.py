@@ -22,7 +22,7 @@ def _get_deployment(ident):
     """Returns the respective deployment with its address."""
 
     join = Deployment.address == Address.id
-    return Deployment.select().join(Address, on=join).where(
+    return Deployment.select(Deployment, Address).join(Address, on=join).where(
         (Deployment.id == ident) & (Deployment.customer == CUSTOMER.id)).get()
 
 
@@ -57,11 +57,16 @@ def _count_stats(statistics):
 def _stats_to_csv(counted_stats):
     """Yields CSV records."""
 
-    for deployment_id, documents in counted_stats.items():
-        deployment = _get_deployment(deployment_id)
+    addresses = {
+        deployment.id: deployment.address for deployment in
+            Deployment.select(Deployment, Address).join(
+                Address, on=Deployment.address == Address.id).where(
+                Deployment.id << set(counted_stats.keys()))
+    }
 
+    for deployment_id, documents in counted_stats.items():
         for document, clicks in documents.items():
-            yield f'{deployment.address};{document};{clicks}'
+            yield f'{addresses[deployment_id]};{document};{clicks}'
 
 
 def _get_csv_filename(deployment, since, until):
