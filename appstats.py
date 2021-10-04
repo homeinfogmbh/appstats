@@ -1,8 +1,10 @@
 """WSGI services."""
 
 from collections import defaultdict
+from datetime import datetime
+from typing import Iterable, Iterator, Optional, Union
 
-from flask import request
+from flask import request, Response
 
 from digsigdb import Statistics
 from his import CUSTOMER, authenticated, authorized, Application
@@ -18,15 +20,18 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Application statistics', debug=True)
 
 
-def _get_deployment(ident):
+def _get_deployment(deployment_id: int) -> Deployment:
     """Returns the respective deployment with its address."""
 
     join = Deployment.address == Address.id
     return Deployment.select(Deployment, Address).join(Address, on=join).where(
-        (Deployment.id == ident) & (Deployment.customer == CUSTOMER.id)).get()
+        (Deployment.id == deployment_id)
+        & (Deployment.customer == CUSTOMER.id)
+    ).get()
 
 
-def _get_stats(deployment, since, until):
+def _get_stats(deployment: Union[Deployment, int], since: Optional[datetime],
+               until: Optional[datetime]) -> Iterator[Statistics]:
     """Yields the customer's tenant-to-tenant messages."""
 
     condition = Deployment.customer == CUSTOMER.id
@@ -43,7 +48,7 @@ def _get_stats(deployment, since, until):
     return Statistics.select().join(Deployment).where(condition).iterator()
 
 
-def _count_stats(statistics):
+def _count_stats(statistics: Iterable[Statistics]) -> dict[int, dict[str, int]]:
     """Counts the respective statistics."""
 
     stats = defaultdict(lambda: defaultdict(int))
@@ -54,7 +59,7 @@ def _count_stats(statistics):
     return stats
 
 
-def _stats_to_csv(counted_stats):
+def _stats_to_csv(counted_stats: dict[int, dict[str, int]]) -> Iterator[str]:
     """Yields CSV records."""
 
     addresses = {
@@ -69,7 +74,8 @@ def _stats_to_csv(counted_stats):
             yield f'{addresses[deployment_id]};{document};{clicks}'
 
 
-def _get_csv_filename(deployment, since, until):
+def _get_csv_filename(deployment: Optional[int], since: Optional[datetime],
+                      until: Optional[datetime]) -> str:
     """Returns a CSV file name."""
 
     if deployment is None:
@@ -85,7 +91,7 @@ def _get_csv_filename(deployment, since, until):
 
 @authenticated
 @authorized('appstats')
-def list_stats():
+def list_stats() -> Response:
     """Returns the respective statistics."""
 
     since = strpdatetime(request.args.get('since'))
