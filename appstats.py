@@ -67,10 +67,19 @@ def _stats_to_csv(counted_stats: dict[int, dict[str, int]]) -> Iterator[str]:
                 Address, on=Deployment.address == Address.id).where(
                 Deployment.id << set(counted_stats.keys()))
     }
+    total_clicks = 0
 
     for deployment_id, documents in counted_stats.items():
+        deployment_clicks = 0
+
         for document, clicks in documents.items():
+            deployment_clicks += clicks
             yield f'{addresses[deployment_id]};{document};{clicks}'
+
+        total_clicks += deployment_clicks
+        yield f'{addresses[deployment_id]};TOTAL;{deployment_clicks}'
+
+    yield f'TOTAL;*;{total_clicks}'
 
 
 def _get_csv_filename(deployment: Optional[int], since: Optional[datetime],
