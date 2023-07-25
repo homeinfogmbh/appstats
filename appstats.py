@@ -13,24 +13,29 @@ from mdb import Address
 from wsgilib import ACCEPT, Binary, JSON
 
 
-__all__ = ['APPLICATION']
+__all__ = ["APPLICATION"]
 
 
-APPLICATION = Application('Application statistics', debug=True)
+APPLICATION = Application("Application statistics", debug=True)
 
 
 def _get_deployment(deployment_id: int) -> Deployment:
     """Returns the respective deployment with its address."""
 
     join = Deployment.address == Address.id
-    return Deployment.select(Deployment, Address).join(Address, on=join).where(
-        (Deployment.id == deployment_id)
-        & (Deployment.customer == CUSTOMER.id)
-    ).get()
+    return (
+        Deployment.select(Deployment, Address)
+        .join(Address, on=join)
+        .where((Deployment.id == deployment_id) & (Deployment.customer == CUSTOMER.id))
+        .get()
+    )
 
 
-def _get_stats(deployment: Union[Deployment, int], since: Optional[datetime],
-               until: Optional[datetime]) -> Iterator[Statistics]:
+def _get_stats(
+    deployment: Union[Deployment, int],
+    since: Optional[datetime],
+    until: Optional[datetime],
+) -> Iterator[Statistics]:
     """Yields the customer's tenant-to-tenant messages."""
 
     condition = Deployment.customer == CUSTOMER.id
@@ -62,10 +67,10 @@ def _stats_to_csv(counted_stats: dict[int, dict[str, int]]) -> Iterator[str]:
     """Yields CSV records."""
 
     addresses = {
-        deployment.id: deployment.address for deployment in
-            Deployment.select(Deployment, Address).join(
-                Address, on=Deployment.address == Address.id).where(
-                Deployment.id << set(counted_stats.keys()))
+        deployment.id: deployment.address
+        for deployment in Deployment.select(Deployment, Address)
+        .join(Address, on=Deployment.address == Address.id)
+        .where(Deployment.id << set(counted_stats.keys()))
     }
     total_clicks = 0
 
@@ -74,62 +79,63 @@ def _stats_to_csv(counted_stats: dict[int, dict[str, int]]) -> Iterator[str]:
 
         for document, clicks in documents.items():
             deployment_clicks += clicks
-            yield f'{addresses[deployment_id]};{document};{clicks}'
+            yield f"{addresses[deployment_id]};{document};{clicks}"
 
         total_clicks += deployment_clicks
-        yield f'{addresses[deployment_id]};TOTAL;{deployment_clicks}'
+        yield f"{addresses[deployment_id]};TOTAL;{deployment_clicks}"
 
-    yield f'TOTAL;*;{total_clicks}'
+    yield f"TOTAL;*;{total_clicks}"
 
 
-def _get_csv_filename(deployment: Optional[int], since: Optional[datetime],
-                      until: Optional[datetime]) -> str:
+def _get_csv_filename(
+    deployment: Optional[int], since: Optional[datetime], until: Optional[datetime]
+) -> str:
     """Returns a CSV file name."""
 
     if deployment is None:
-        address = 'all'
+        address = "all"
     else:
         address = _get_deployment(deployment).address
 
-    since = 'beginning' if since is None else since.isoformat()
-    until = 'now' if until is None else until.isoformat()
+    since = "beginning" if since is None else since.isoformat()
+    until = "now" if until is None else until.isoformat()
 
-    return f'statistics-{address}-{since}-{until}.csv'
+    return f"statistics-{address}-{since}-{until}.csv"
 
 
 @authenticated
-@authorized('appstats')
+@authorized("appstats")
 def list_stats() -> Response:
     """Returns the respective statistics."""
 
-    if (since := request.args.get('since')) is not None:
+    if (since := request.args.get("since")) is not None:
         since = datetime.fromisoformat(since)
 
-    if (until := request.args.get('until')) is not None:
+    if (until := request.args.get("until")) is not None:
         until = datetime.fromisoformat(until)
 
-    deployment = request.args.get('deployment')
+    deployment = request.args.get("deployment")
 
     if deployment is not None:
         try:
             deployment = int(deployment)
         except ValueError:
-            return ('Invalid deployment ID.', 404)
+            return ("Invalid deployment ID.", 404)
 
     statistics = _get_stats(deployment, since, until)
 
-    if request.args.get('raw', False):
+    if request.args.get("raw", False):
         return JSON([statistic.to_json() for statistic in statistics])
 
     counted_stats = _count_stats(statistics)
 
-    if 'text/csv' in ACCEPT:
-        text = '\r\n'.join(_stats_to_csv(counted_stats))
+    if "text/csv" in ACCEPT:
+        text = "\r\n".join(_stats_to_csv(counted_stats))
         filename = _get_csv_filename(deployment, since, until)
         return Binary(text.encode(), filename=filename)
 
     return JSON(counted_stats)
 
 
-ROUTES = (('GET', '/', list_stats),)
+ROUTES = (("GET", "/", list_stats),)
 APPLICATION.add_routes(ROUTES)
